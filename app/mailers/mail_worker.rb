@@ -10,6 +10,8 @@ class MailWorker
   attr_accessor :deadline_text
   attr_accessor :due_at
 
+  # Note the name perform is required for the MailWorker to properly use Sidekiq
+  # Performs the delayed mailer funcction for sending the deadline emails using Sidekiq
   def perform(assignment_id, deadline_type, due_at)
     self.assignment_id = Assignment.find(assignment_id)
     self.deadline_type = deadline_type
@@ -25,6 +27,7 @@ class MailWorker
 
   protected
 
+  #Formats the fields of the MailWorker to be used in the email reminder
   def prepare_data
     # Can we rename deadline_type(metareview) to "teammate review". If, yes then we do not need this if clause below!
     self.deadline_text = self.deadline_type == "metareview" ? "teammate review" : self.deadline_type
@@ -32,6 +35,7 @@ class MailWorker
 
   private
 
+  #Formats and sends the email to the users of the proper team
   def email_reminder(emails, deadline_type)
     subject = "Message regarding #{deadline_type} for assignment #{self.assignment.name}"
     body = "This is a reminder to complete #{deadline_type} for assignment #{self.assignment.name}. \
@@ -45,6 +49,7 @@ class MailWorker
     @mail.deliver_now
   end
 
+  #Finds the emails of the users on an assignment
   def find_participant_emails
     emails = []
     participants = Participant.where(parent_id: self.assignment_id)
